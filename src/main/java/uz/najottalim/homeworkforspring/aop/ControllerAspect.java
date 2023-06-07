@@ -15,7 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import uz.najottalim.homeworkforspring.dto.CommentsDto;
 import uz.najottalim.homeworkforspring.dto.ErrorDto;
+import uz.najottalim.homeworkforspring.excepton.ArgNotValidException;
 import uz.najottalim.homeworkforspring.excepton.NoResourceFoundException;
 
 import java.util.*;
@@ -28,30 +30,23 @@ public class ControllerAspect {
     public void commentsController(){
 
     }
-
-    @Pointcut(value = "@annotation(jakarta.validation.Valid)")
-    public void commentsDToValidation(){
-
-    }
-
-    @Pointcut(value = "args(uz.najottalim.homeworkforspring.dto.CommentsDto)")
-    public void commentsDtoArgs(){
-
-    }
-
-    @Before(value = "commentsDToValidation() && commentsDtoArgs() ")
-    public void successfulValidation(JoinPoint jp){
-        System.out.println(jp.getArgs()[1]);
-    }
-
     @Around(value = "commentsController()")
     public Object successfulCrud(ProceedingJoinPoint proceedingJoinPoint){
         Object proceed;
         try{
+            Object[] args = proceedingJoinPoint.getArgs();
+            for (Object arg:args) {
+                if(arg instanceof CommentsDto commentsDto){
+                    if(commentsDto.getBody() == null) throw new ArgNotValidException();
+                    else if(commentsDto.getBody().isBlank()) throw  new ArgNotValidException();
+                }
+            }
             proceed = ResponseEntity.status(200).body(proceedingJoinPoint.proceed());
         }catch (NoResourceFoundException ex){
             proceed = ResponseEntity.status(404).body(ErrorDto.builder().errors(Map.of("no resource found exception",List.of(ex.getMessage()))).build());
 
+        }catch (ArgNotValidException ex){
+            proceed = ResponseEntity.status(404).body(ErrorDto.builder().errors(Map.of("field exception",List.of(ex.getMessage()))).build());
         }catch (MethodArgumentNotValidException ex){
             Map<String, List<String>> errors = ex.getBindingResult().getFieldErrors().stream()
                     .collect(Collectors.groupingBy(

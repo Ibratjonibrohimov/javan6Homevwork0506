@@ -21,12 +21,14 @@ public class CommentsResources {
     }
 
     @PostMapping
-    public ResponseEntity<?> addComment(@Valid @RequestBody CommentsDto commentsDto){
+    @Valid
+    public ResponseEntity<?> addComment(@RequestBody CommentsDto commentsDto){
         return commentsServices.addComment(commentsDto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateComment(@Valid @PathVariable Long id,@RequestBody CommentsDto commentsDto){
+    @Valid
+    public ResponseEntity<?> updateComment(@PathVariable Long id,@RequestBody CommentsDto commentsDto){
         return commentsServices.updateComment(id,commentsDto);
     }
     @DeleteMapping("/{id}")
